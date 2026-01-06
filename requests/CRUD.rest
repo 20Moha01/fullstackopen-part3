@@ -1,0 +1,14 @@
+### GET ALL CONTACTS
+GET http://localhost:3001/api/persons
+
+### ADD A CONTACT
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+    "name": "Gusano Estelar",
+    "number": "333-333333"
+}
+
+### DELETE CONTACT
+DELETE http://localhost:3001/api/persons/1
