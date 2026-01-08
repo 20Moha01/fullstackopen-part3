@@ -1,8 +1,8 @@
 ### GET ALL CONTACTS
-GET http://localhost:3001/api/persons
+GET https://fullstackopen-part3-tqx2.onrender.com/api/persons
 
 ### ADD A CONTACT
-POST http://localhost:3001/api/persons
+POST https://fullstackopen-part3-tqx2.onrender.com/api/persons
 Content-Type: application/json
 
 {
@@ -11,4 +11,4 @@ Content-Type: application/json
 }
 
 ### DELETE CONTACT
-DELETE http://localhost:3001/api/persons/1
+DELETE https://fullstackopen-part3-tqx2.onrender.com/api/persons/1
