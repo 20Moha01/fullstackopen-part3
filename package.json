@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "build:ui": "rimraf dist && pnpm --dir frontend run build && shx mv frontend/dist .",
+    "deploy:full": "pnpm run build:ui && git add . && git commit -m \"ui build\" && git push"
   },
   "author": "Mohamed El Kanboui Bouaacha",
   "license": "MIT",
@@ -17,6 +19,8 @@
     "morgan": "^1.10.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.11",
+    "rimraf": "^6.1.2",
+    "shx": "^0.4.0"
   }
 }
