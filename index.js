@@ -1,46 +1,15 @@
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";
+import Person from "./models/person.js";
+import dotenv from "dotenv";
+import unknownEndpoint from "./middlewares/unknownEndpoint.js";
+import errorHandler from "./middlewares/errorHandler.js";
+import NotFoundError from "./Error/NotFoundError.js";
+
+dotenv.config();
 
 const app = express();
-
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-  {
-    id: 5,
-    name: "Mohamed El Kanboui Bouaacha",
-    number: "221-748392",
-  },
-  {
-    id: 6,
-    name: "Ilyas El Kanboui Bouaacha",
-    number: "023-123456",
-  },
-  {
-    id: 7,
-    name: "Adumu González",
-    number: "345-219292",
-  },
-];
 
 app.use(express.json());
 app.use(express.static("dist"));
@@ -60,35 +29,32 @@ app.use(
 );
 app.use(cors());
 
-const generateID = () => {
-  const maxId =
-    persons.length > 0 ? Math.max(...persons.map((person) => person.id)) : 0;
-  return maxId + 1;
-};
-
-app.get("/", (request, response) => {
-  response.send(`<h1>Welcome to your phonebook</h1>`);
-});
-
 app.get("/info", (request, response) => {
-  response.send(`
-    <p>Phonebook has info for ${persons.length} people</p>
+  Person.countDocuments({}).then((contactsLength) => {
+    response.send(`
+    <p>Phonebook has info for ${contactsLength} people</p>
     <p>${new Date()}</p>
     `);
+  });
 });
 
 app.get("/api/persons", (request, response) => {
-  response.json(persons);
+  Person.find({}).then((persons) => {
+    response.json(persons);
+  });
 });
 
-app.get("/api/persons/:id", (request, response) => {
+app.get("/api/persons/:id", (request, response, next) => {
   const { id } = request.params;
-  const person = persons.find((person) => person.id === Number(id));
-  if (!person) return response.status(404).end("Contact not found (404)");
-  response.json(person);
+  Person.findById(id)
+    .then((person) => {
+      if (!person) throw new NotFoundError("Contact Not Found");
+      response.json(person);
+    })
+    .catch((err) => next(err));
 });
 
-app.post("/api/persons", (request, response) => {
+app.post("/api/persons", (request, response, next) => {
   const body = request.body;
 
   const missingFields = [];
@@ -97,33 +63,77 @@ app.post("/api/persons", (request, response) => {
   );
 
   if (missingFields.length > 0) {
-    return response
-      .status(400)
-      .json({ error: `content missing (${missingFields.join(", ")})` });
+    return response.status(400).json({
+      message: `content missing (${missingFields.join(", ")})`,
+    });
   }
 
-  if (persons.find((person) => person.name === body.name)) {
-    return response.status(400).json({ error: "name must be unique" });
-  }
-
-  const person = {
-    id: generateID(),
-    name: body.name,
-    number: body.number,
-  };
-
-  persons = persons.concat(person);
-
-  response.status(201).json(person);
+  Person.findOne({ name: body.name })
+    .then((person) => {
+      if (person)
+        return response.status(400).json({ message: "name must be unique" });
+      else {
+        const person = new Person({
+          name: body.name,
+          number: body.number,
+        });
+        person
+          .save()
+          .then((savedPerson) => {
+            return response.status(201).json(savedPerson);
+          })
+          .catch((err) => next(err));
+      }
+    })
+    .catch((err) => next(err));
 });
 
-app.delete("/api/persons/:id", (request, response) => {
+app.put("/api/persons/:id", (request, response, next) => {
   const { id } = request.params;
-  if (!persons.find((person) => person.id === Number(id)))
-    return response.status(404).end("Contact not found (404)");
-  persons = persons.filter((person) => person.id !== Number(id));
-  response.status(204).end();
+  const body = request.body;
+
+  const missingFields = [];
+  Object.keys(body).forEach((key) =>
+    !body[key] ? missingFields.push(key) : missingFields
+  );
+
+  if (missingFields.length > 0) {
+    return response.status(400).json({
+      message: `content missing (${missingFields.join(", ")})`,
+    });
+  }
+
+  const person = { name: body.name, number: body.number };
+
+  Person.findByIdAndUpdate(id, person, {
+    new: true,
+    runValidators: true,
+    context: "query",
+  })
+    .then((updatedPerson) => {
+      if (!updatedPerson) throw new NotFoundError("Contact Not Found");
+      response.json({ message: "Contact updated successfully", updatedPerson });
+    })
+    .catch((err) => next(err));
 });
 
-const PORT = process.env.PORT || 3001;
+app.delete("/api/persons/:id", (request, response, next) => {
+  const { id } = request.params;
+  Person.findByIdAndDelete(id)
+    .then((deletedContact) => {
+      if (!deletedContact) throw new NotFoundError("Contact Not Found");
+      response.json({
+        message: "Contact deleted successfully",
+        deletedContact,
+      });
+    })
+    .catch((err) => next(err));
+});
+
+// Los middlewares actúan por orden de aparición de arriba a abajo. Hay que asegurarse
+// que estén declarado al final, después de la definición de los endpoints.
+app.use(unknownEndpoint);
+app.use(errorHandler);
+
+const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

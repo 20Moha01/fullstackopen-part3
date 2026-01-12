@@ -1,14 +1,26 @@
 ### GET ALL CONTACTS
-GET https://fullstackopen-part3-tqx2.onrender.com/api/persons
+GET http://localhost:3001/api/persons/
+
+### GET CONTACT BY ID
+GET http://localhost:3001/api/persons/6960f0c5671ca7cb0e0df9b2
 
 ### ADD A CONTACT
-POST https://fullstackopen-part3-tqx2.onrender.com/api/persons
+POST http://localhost:3001/api/persons/
+Content-Type: application/json
+
+{
+    "name": "Fu",
+    "number": "000"
+}
+
+### UPDATE A CONTACT
+PUT http://localhost:3001/api/persons/695fc6ca703f57dd85ca8e4b
 Content-Type: application/json
 
 {
     "name": "Gusano Estelar",
-    "number": "333-333333"
+    "number": "000-000001"
 }
 
 ### DELETE CONTACT
-DELETE https://fullstackopen-part3-tqx2.onrender.com/api/persons/1
+DELETE http://localhost:3001/api/persons/6960f0f5d5ae1d188cabea29
