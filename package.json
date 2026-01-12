@@ -9,7 +9,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
     "build:ui": "rimraf dist && pnpm --dir frontend run build && shx mv frontend/dist .",
-    "deploy:full": "pnpm run build:ui && git add . && git commit -m \"ui build\" && git push"
+    "deploy:full": "pnpm run build:ui && git add . && git commit -m \"ui build\" && git push",
+    "lint": "eslint ."
   },
   "author": "Mohamed El Kanboui Bouaacha",
   "license": "MIT",
@@ -21,6 +22,10 @@
     "morgan": "^1.10.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@stylistic/eslint-plugin": "^5.7.0",
+    "eslint": "^9.39.2",
+    "globals": "^17.0.0",
     "nodemon": "^3.1.11",
     "rimraf": "^6.1.2",
     "shx": "^0.4.0"
